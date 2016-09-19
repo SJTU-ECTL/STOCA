@@ -110,6 +110,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="hash_extend.h" />
+    <ClInclude Include="node.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="node.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
