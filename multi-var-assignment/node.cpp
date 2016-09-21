@@ -434,7 +434,166 @@ AssMat SolutionTree::AssignMatrixByEspresso(AssMat originalAssMat, CubeDecomposi
     // and the assignment set for [1,1]
     // which is {0,1}
 
+    // vector<MintermVector> vectors
+    // for each MintermVector in the cubeDecompositionToBeAssigned
+    // we find its assignment set
+    
+    auto assignmentSetsVector = vector<vector<set<string>>>();
+
+    // find all assignment sets for each cube vector
+    for (auto mintermVec : cubeDecompositionToBeAssigned.second)
+    {
+        // for cube minterm vector [1, 1, 0], we find the assignment sets as following
+        // {00, 01} and {00, 10}.
+        // vector<set<int>> assignmentSets
+        auto assignmentSets = FindAssignmentSetsOfStringForMintermVector(mintermVec);
+        assignmentSetsVector.push_back(assignmentSets);
+    }
+
+    // it contains all of the possible assignment sets
+    // for this cube decomposition in string
+    auto assignmentSetsOfStringForCubeDecomposition = FindAssignmentSetsOfStringForCubeDecomposition(assignmentSetsVector);
+
+    // transform the string version to integer version
+    auto assignmentSetsOfIntForCubeDecomposition = vector<set<int>>();
+    for (auto setOfString : assignmentSetsOfStringForCubeDecomposition)
+    {
+        auto setOfInt = set<int>();
+        for (auto str : setOfString)
+        {
+            setOfInt.insert(BinToInt(str));
+        }
+        assignmentSetsOfIntForCubeDecomposition.push_back(setOfInt);
+    }
+
     return AssMat();
+}
+
+vector<set<string>> SolutionTree::FindAssignmentSetsOfStringForMintermVector(MintermVector lineCubeVector) const
+{
+    auto countOfOne = 0;
+
+    // find the first non-zero term in lineCubeVector
+    // because the number of zeros in the beginning
+    // is the number of un-complemented X-variables
+    for (; countOfOne < lineCubeVector.size(); ++countOfOne)
+    {
+        if (lineCubeVector[countOfOne] == 0) continue;
+        break;
+    }
+
+    auto countOfMinterm = 0;
+
+    // find the count of minterms
+    for (auto i = countOfOne; i < lineCubeVector.size(); ++i)
+    {
+        countOfMinterm += lineCubeVector[i];
+    }
+
+    // the number of zeros in the end is the 
+    // number of complemented X-variables
+    // it's d - t - r, d = size - 1, t = countOfOne, r = log2(countOfMinterm)
+    // since countOfMinterm = choose(r, 0) + choose(r, 1) + ... + choose(r, r)
+    auto countOfZero = lineCubeVector.size() - 1 - countOfOne - static_cast<int>(log2(countOfMinterm));
+
+    // then we have all of the information we need
+
+    // next we need to find a basic assignment set according to the 
+    // count of minterms. For example, [1, 1, 0] has two minterms,
+    // the basic assignment set will be {0, 1}, then insert 0/1
+    // according to the countOfOne and countOfZero we have got.
+    auto basicAssignmentSet = BuildBasicAssignmentSet(countOfMinterm);
+
+    // then we will find all of the assignment sets
+    auto assignmentSetsOfString = BuildAssignmentSet(basicAssignmentSet, countOfZero, countOfOne);
+    return assignmentSetsOfString;
+}
+
+set<string> SolutionTree::BuildBasicAssignmentSet(int mintermCount) const
+{
+    auto ret = set<string>();
+
+    // if the cube has only one minterm, like [0, 1, 0]
+    // its basic assignment set is defined as {""}
+    if (mintermCount == 1)
+    {
+        ret.insert("");
+        return ret;
+    }
+
+    auto log2MintermCount = static_cast<int>(log2(mintermCount));
+    auto grayCode = ConstructGrayCode(log2MintermCount);
+
+    for (auto i : grayCode)
+    {
+        ret.insert(IntToBin(i, log2MintermCount - 1));
+    }
+
+    return ret;
+}
+
+vector<set<string>> SolutionTree::BuildAssignmentSet(set<string> basicAssignmentSet, int countOfZero, int countOfOne)
+{
+    auto ret = vector<set<string>>();
+    auto zeroOneTwoPermutation = BuildZeroOneTwoPermutation(countOfZero, basicAssignmentSet.begin()->size(), countOfOne);
+
+    for (auto pattern : zeroOneTwoPermutation)
+    {
+        auto tempAssignmentSet = set<string>();
+
+        for (auto str : basicAssignmentSet)
+        {
+            auto pos = 0;
+            auto res = string();
+
+            for (auto i = 0; i < pattern.size(); ++i)
+            {
+                if (pattern[i] == '0')
+                {
+                    res += "0";
+                }
+                else if (pattern[i] == '2')
+                {
+                    res += "1";
+                }
+                else
+                {
+                    res += str[pos++];
+                }
+            }
+            tempAssignmentSet.insert(res);
+        }
+        ret.push_back(tempAssignmentSet);
+    }
+    return ret;
+}
+
+vector<set<string>> SolutionTree::FindAssignmentSetsOfStringForCubeDecomposition(vector<vector<set<string>>> assignmentSetsVector) const
+{
+    return FindAssignmentSetsOfStringForCubeDecompositionHelper(assignmentSetsVector, vector<set<string>>{set<string>{""}});
+}
+
+vector<set<string>> SolutionTree::FindAssignmentSetsOfStringForCubeDecompositionHelper(vector<vector<set<string>>> remainingAssignmentSetsVector, vector<set<string>> currentAssignmentSets) const
+{
+    assert(!remainingAssignmentSetsVector.empty());
+
+    auto setVec = vector<set<string>>();
+    for (auto set1 : currentAssignmentSets)
+    {
+        for (auto set2 : remainingAssignmentSetsVector[0])
+        {
+            setVec.push_back(MultiplyAssignmentSets(set1, set2));
+        }
+    }
+
+    if (remainingAssignmentSetsVector.size() == 1)
+    {
+        return setVec;
+    }
+
+    // remainingAssignmentSetsVector.size() >= 2
+    remainingAssignmentSetsVector.erase(remainingAssignmentSetsVector.begin());
+    return FindAssignmentSetsOfStringForCubeDecompositionHelper(remainingAssignmentSetsVector, setVec);
 }
 
 MintermVector multiply(int line, MintermVector cubeVec)
@@ -500,6 +659,17 @@ string IntToBin(int num, int highestDegree)
     return ret;
 }
 
+int BinToInt(string str)
+{
+    auto ret = 0;
+    for (auto ch : str)
+    {
+        ret <<= 1;
+        ret |= static_cast<int>(ch - '0');
+    }
+    return ret;
+}
+
 bool CapacityConstraintSatisfied(vector<int> problemVector, MintermVector cubeVector)
 {
     assert(problemVector.size() == cubeVector.size());
@@ -543,6 +713,86 @@ long long int choose(int n, int k)
     }
 
     return ret;
+}
+
+vector<int> ConstructGrayCode(int size)
+{
+    auto grayCode = vector<int>();
+    grayCode.push_back(0);
+    grayCode.push_back(1);
+
+    for (auto i = 1; i < size; ++i)
+    {
+        grayCode = ConstructGrayCodeHelper(grayCode);
+    }
+
+    return grayCode;
+}
+
+vector<int> ConstructGrayCodeHelper(vector<int> grayCode)
+{
+    auto ret = vector<int>();
+    for (auto i = 0; i < grayCode.size(); ++i)
+    {
+        if (i % 2 == 0)
+        {
+            ret.push_back(grayCode[i] << 1);
+            ret.push_back((grayCode[i] << 1) | 1);
+        }
+        else
+        {
+            ret.push_back((grayCode[i] << 1) | 1);
+            ret.push_back(grayCode[i] << 1);
+        }
+    }
+    return ret;
+}
+
+vector<string> BuildZeroOneTwoPermutation(int countOfZero, int countOfOne, int countOfTwo)
+{
+    auto vic = string(countOfZero, '0') + string(countOfOne, '1') + string(countOfTwo, '2');
+    auto ret = vector<string>();
+
+    do
+    {
+        ret.push_back(vic);
+    } while (next_permutation(vic.begin(), vic.end()));
+
+    return ret;
+}
+
+set<string> MultiplyAssignmentSets(set<string> set1, set<string> set2)
+{
+    auto ret = set<string>();
+    for (auto str1 : set1)
+    {
+        for (auto str2 : set2)
+        {
+            ret.insert(str1 + str2);
+        }
+    }
+    return ret;
+}
+
+set<string> MultiplyAssignmentSets(vector<set<string>> sets)
+{
+    assert(!sets.empty());
+    if (sets.size() == 1)
+    {
+        return sets[0];
+    }
+
+    auto prod = MultiplyAssignmentSets(sets[0], sets[1]);
+    if (sets.size() == 2)
+    {
+        return prod;
+    }
+
+    // if the size >= 3
+    sets.erase(sets.begin());
+    sets[0] = prod;
+
+    return MultiplyAssignmentSets(sets);
 }
 
 Node::Node(AssMat newAssMat, MintermVector newProblemVector, int newLevel, unordered_multiset<CubeDecomposition> newAssignedCubeDecompositions, CubeDecomposition lastAssignedCubeDecomposition, int literalCount)

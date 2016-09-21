@@ -14,6 +14,7 @@
 #include <fstream>
 #include <unordered_map>
 #include <sstream>
+#include <set>
 #include "hash_extend.h"
 
 using namespace std;
@@ -93,6 +94,23 @@ public:
 
     AssMat AssignMatrixByEspresso(AssMat originalAssMat, CubeDecomposition cubeDecompositionToBeAssigned);
 
+    // find the assignment sets for a single vector
+    vector<set<string>> FindAssignmentSetsOfStringForMintermVector(MintermVector lineCubeVector) const;
+
+    set<string> BuildBasicAssignmentSet(int mintermCount) const;
+
+    static vector<set<string>> BuildAssignmentSet(set<string> basicAssignmentSet, int countOfZero, int countOfOne);
+
+    // get all of the assignment sets by recursion, although the name is "ForCubeDecomposition"
+    // the input is not a CubeDecomposition, but the assignment sets for each cube vector in the decomposition
+    // INPUT: vector<vector<set<string>>> assignmentSetsVector
+    // each element in this vector is a vector<set<string>>, which contains
+    // all of the assignment sets of the corresponding cube component in the decomposition
+    // OUTPUT: vector<set<string>> ret
+    // it contains all of the assignment sets -- by "multiplication" we can get them
+    vector<set<string>> FindAssignmentSetsOfStringForCubeDecomposition(vector<vector<set<string>>> assignmentSetsVector) const;
+    vector<set<string>> FindAssignmentSetsOfStringForCubeDecompositionHelper(vector<vector<set<string>>> remainingAssignmentSetsVector, vector<set<string>> currentAssignmentSets) const;
+
     // subtract the cube from the problem vector
     //static MintermVector SubtractCube(MintermVector problemVector, MintermVector cube);
 
@@ -131,6 +149,7 @@ MintermVector multiply(MintermVector cubeVec1, MintermVector cubeVec2);
 MintermVector multiply(vector<MintermVector> cubeVecs);
 
 string IntToBin(int num, int highestDegree);
+int BinToInt(string str);
 
 bool CapacityConstraintSatisfied(vector<int> problemVector, MintermVector cubeVector);
 
@@ -139,5 +158,13 @@ MintermVector SubtractCube(MintermVector problemVector, MintermVector cube);
 bool IsZeroMintermVector(MintermVector vec);
 
 long long int choose(int n, int k);
+
+vector<int> ConstructGrayCode(int size);
+vector<int> ConstructGrayCodeHelper(vector<int> grayCode);
+
+vector<string> BuildZeroOneTwoPermutation(int countOfZero, int countOfOne, int countOfTwo);
+
+set<string> MultiplyAssignmentSets(set<string> set1, set<string> set2);
+set<string> MultiplyAssignmentSets(vector<set<string>> sets);
 
 #endif
