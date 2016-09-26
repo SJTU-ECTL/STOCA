@@ -41,6 +41,10 @@ typedef pair<int, vector<MintermVector>> CubeDecomposition;
 struct Node
 {
     // TODO: constructor to be written
+    Node(): _level(0), _literalCountSoFar(0)
+    {
+    }
+
     Node(AssMat newAssMat, MintermVector newProblemVector, int newLevel, unordered_multiset<CubeDecomposition> newAssignedCubeDecompositions, CubeDecomposition lastAssignedCubeDecomposition, int literalCount);
 
     // assigned "assignment matrix"
@@ -85,14 +89,11 @@ public:
     // INPUT: the log2 of the cube size
     // OUTPUT: the vector of the possible CubeDecomposition
     // NOTE: this method will use _accuracy and the _degrees
-    vector<CubeDecomposition> PossibleCubeDecompositions(int log2CubeSize);
-    vector<CubeDecomposition> PossibleCubeDecompositionsHelper(int remainingLog2CubeSize, vector<CubeDecomposition> partialDecompositions, vector<int> remainingDegrees);
+    vector<CubeDecomposition> PossibleCubeDecompositions(int log2CubeSize) const;
+    vector<CubeDecomposition> PossibleCubeDecompositionsHelper(int remainingLog2CubeSize, vector<CubeDecomposition> partialDecompositions, vector<int> remainingDegrees) const;
     vector<MintermVector> PossibleLineCubeVectors(int log2CubeSize, int degree) const;
 
-    // originally "containCube" method
-    //static bool CapacityConstraintSatisfied(vector<int> problemVector, MintermVector cubeVector);
-
-    AssMat AssignMatrixByEspresso(AssMat originalAssMat, CubeDecomposition cubeDecompositionToBeAssigned);
+    AssMat AssignMatrixByEspresso(AssMat originalAssMat, CubeDecomposition cubeDecompositionToBeAssigned) const;
 
     // find the assignment sets for a single vector
     vector<set<string>> FindAssignmentSetsOfStringForMintermVector(MintermVector lineCubeVector) const;
@@ -110,11 +111,6 @@ public:
     // it contains all of the assignment sets -- by "multiplication" we can get them
     vector<set<string>> FindAssignmentSetsOfStringForCubeDecomposition(vector<vector<set<string>>> assignmentSetsVector) const;
     vector<set<string>> FindAssignmentSetsOfStringForCubeDecompositionHelper(vector<vector<set<string>>> remainingAssignmentSetsVector, vector<set<string>> currentAssignmentSets) const;
-
-    // subtract the cube from the problem vector
-    //static MintermVector SubtractCube(MintermVector problemVector, MintermVector cube);
-
-
 
 
     // data

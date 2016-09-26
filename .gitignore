@@ -243,3 +243,6 @@ ModelManifest.xml
 
 # FAKE - F# Make
 .fake/
+/multi-var-assignment/acc.pla
+/multi-var-assignment/acc.txt
+/multi-var-assignment/vector.txt
