@@ -115,7 +115,7 @@ public:
 
     // data
     int _caseNumber;
-    int _lengthOfTotalCube; // (d1+1)(d2+1)...(dn+1)
+    int _log2LengthOfTotalCube; // d1 + d2 + ...
     vector<int> _degrees;
     int _accuracy;
 

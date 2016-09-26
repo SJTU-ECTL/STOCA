@@ -2,17 +2,21 @@
 
 SolutionTree::SolutionTree(vector<int> initialProblemVector, vector<int> degrees, int accuracy, int caseNumber)
 {
-    _lengthOfTotalCube = static_cast<int>(initialProblemVector.size());
+    // NOTE: _log2LengthOfTotalCube equals to d1 + d2 + ... + dk
+    _log2LengthOfTotalCube = 0;
+    for (auto d : degrees)
+    {
+        _log2LengthOfTotalCube += d;
+    }
     _degrees = degrees;
     _accuracy = accuracy;
     _caseNumber = caseNumber;
     _minLiteralCount = INT_MAX;
 
     // initialize root node
-    // NOTE: _lengthOfTotalCube equals to (d1+1)(d2+1)...(dn+1)
-    auto powDegree = static_cast<int>(pow(2, _lengthOfTotalCube));
-    auto powAccuracy = static_cast<int>(pow(2, _accuracy));
-    auto assignmentMatrix = AssMat(powAccuracy, string(powDegree, '0'));
+    auto lengthOfTotalCube = int(pow(2, _log2LengthOfTotalCube));
+    auto powAccuracy = int(pow(2, _accuracy));
+    auto assignmentMatrix = AssMat(powAccuracy, string(lengthOfTotalCube, '0'));
 
     auto root = Node(assignmentMatrix, initialProblemVector, 0, unordered_multiset<CubeDecomposition>(), CubeDecomposition(), 0); // TODO: fill this after complete the constructor of Node
 
@@ -34,7 +38,7 @@ void SolutionTree::ProcessTree()
     while (!_nodeVector.empty())
     {
         // process all of the nodes in the vector
-        vector<Node> nodeVectorOfNextLevel = ProcessNodeVector(_nodeVector);
+        auto nodeVectorOfNextLevel = ProcessNodeVector(_nodeVector);
 
         // update the node vector
         _nodeVector = nodeVectorOfNextLevel;
@@ -51,13 +55,13 @@ vector<Node> SolutionTree::ProcessNode(Node currentNode)
     // the vector of nodes to be returned
     // they should have the same literal count
     // and the same size, the size must be the largest size
-    vector<Node> ret;
+    auto ret = vector<Node>{};
 
     // currentNode is originally "cNode"
 
     // at first, we sum up the number of minterms
     //// mintermCount is originally numMinTerm
-    int mintermCount = 0;
+    auto mintermCount = 0;
     for (auto i : currentNode._remainingProblemVector)
     {
         mintermCount += i;
@@ -65,11 +69,11 @@ vector<Node> SolutionTree::ProcessNode(Node currentNode)
 
     // then, we find the maximal possible cubes
 
-    bool found = false;
+    auto found = false;
 
     // log2MintermCount is originally MTNinCube
     // It is the log2 of minterm count in the cube
-    int log2MintermCount = static_cast<int>(floor(log2(mintermCount)));
+    auto log2MintermCount = int(floor(log2(mintermCount)));
 
     // the main loop;
     while (!found && (log2MintermCount >= 0))
@@ -88,7 +92,7 @@ vector<Node> SolutionTree::ProcessNode(Node currentNode)
             // i.e., we multiply the vectors to get
             // the total vector:
             // (v0, v1, v2)X(u0, u1)=(w00, w10, w20, w01, w11, w21)
-            auto totalCubeVector = multiply(static_cast<int>(pow(2, cubeDecomposition.first)), multiply(cubeDecomposition.second));
+            auto totalCubeVector = multiply(int(pow(2, cubeDecomposition.first)), multiply(cubeDecomposition.second));
 
             // checking the capacity constraint
             if (!CapacityConstraintSatisfied(currentNode._remainingProblemVector, totalCubeVector))
@@ -136,14 +140,14 @@ vector<Node> SolutionTree::ProcessNode(Node currentNode)
 
             // create a temporary .pla file
             ofstream ofs("temp.pla");
-            ofs << ".i " << _lengthOfTotalCube + _accuracy << endl;
+            ofs << ".i " << _log2LengthOfTotalCube + _accuracy << endl;
             ofs << ".o 1" << endl;
-            for (auto line = 0; line < newAssMat.size(); ++line)
+            for (auto line = 0; line < int(newAssMat.size()); ++line)
             {
-                for (auto col = 0; col < newAssMat[line].size(); ++col)
+                for (auto col = 0; col < int(newAssMat[line].size()); ++col)
                 {
                     if (newAssMat[line][col] == '0') continue;
-                    ofs << IntToBin(line, _accuracy - 1) << IntToBin(col, _lengthOfTotalCube - 1) << " 1" << endl;
+                    ofs << IntToBin(line, _accuracy - 1) << IntToBin(col, _log2LengthOfTotalCube - 1) << " 1" << endl;
                 }
             }
             ofs << ".e" << endl;
@@ -151,7 +155,7 @@ vector<Node> SolutionTree::ProcessNode(Node currentNode)
             // invoke the espresso through MVSIS
             system("mvsis50720.exe -c \"read_pla temp.pla; espresso; print_stats -s;\" > tempres.txt");
 
-            ifstream ifs("tempres.txt");
+            auto ifs = ifstream("tempres.txt");
 
             string tempString;
             auto literalCount = 0;
@@ -186,7 +190,7 @@ vector<Node> SolutionTree::ProcessNode(Node currentNode)
 
             // sub node
             auto remainingProblemVector = SubtractCube(currentNode._remainingProblemVector, totalCubeVector);
-            Node newNode(newAssMat, remainingProblemVector, currentNode._level + 1, newAssignedCubeDecompositions, cubeDecomposition, literalCount);
+            auto newNode = Node(newAssMat, remainingProblemVector, currentNode._level + 1, newAssignedCubeDecompositions, cubeDecomposition, literalCount);
 
             // update the max level
             if (_maxLevel <= currentNode._level)
@@ -195,12 +199,12 @@ vector<Node> SolutionTree::ProcessNode(Node currentNode)
             }
 
             // the current level's cubes' size must be 0 (un-initialized) or <= 2^log2MintermCount
-            assert((_sizeOfCubeInLevel[currentNode._level] == 0) || (_sizeOfCubeInLevel[currentNode._level] <= static_cast<int>(pow(2, log2MintermCount))));
+            assert((_sizeOfCubeInLevel[currentNode._level] == 0) || (_sizeOfCubeInLevel[currentNode._level] <= int(pow(2, log2MintermCount))));
 
             // if it is less than 2^log2MintermCount strictly: reset the following levels
-            if (_sizeOfCubeInLevel[currentNode._level] < static_cast<int>(pow(2, log2MintermCount)))
+            if (_sizeOfCubeInLevel[currentNode._level] < int(pow(2, log2MintermCount)))
             {
-                _sizeOfCubeInLevel[currentNode._level] = static_cast<int>(pow(2, log2MintermCount));
+                _sizeOfCubeInLevel[currentNode._level] = int(pow(2, log2MintermCount));
                 for (auto i = currentNode._level + 1; i <= _maxLevel; ++i)
                 {
                     _sizeOfCubeInLevel[i] = 0;
@@ -229,7 +233,7 @@ vector<Node> SolutionTree::ProcessNode(Node currentNode)
         } // end of for (auto cubeDecomposition : possibleCubeDecompositionVector)
 
         --log2MintermCount;
-        if ((_sizeOfCubeInLevel[currentNode._level] != 0) && (_sizeOfCubeInLevel[currentNode._level] > static_cast<int>(pow(2, log2MintermCount)))) break;
+        if ((_sizeOfCubeInLevel[currentNode._level] != 0) && (_sizeOfCubeInLevel[currentNode._level] > int(pow(2, log2MintermCount)))) break;
     } // end of while (!found && (log2MintermCount >= 0))
 
     return ret;
@@ -237,7 +241,7 @@ vector<Node> SolutionTree::ProcessNode(Node currentNode)
 
 vector<Node> SolutionTree::ProcessNodeVector(vector<Node> nodeVecToBeProcessed)
 {
-    vector<Node> resultSubNodeVector;
+    auto resultSubNodeVector = vector<Node>{};
 
     // first process each node in the vector and get the optimal nodes
     // use for loop to traverse all of the nodes
@@ -247,7 +251,7 @@ vector<Node> SolutionTree::ProcessNodeVector(vector<Node> nodeVecToBeProcessed)
         // we need a helper method to process the node
         // INPUT: Node
         // OUTPUT: a vector of sub nodes that have the same literal count and size
-        vector<Node> tempNodeVector = ProcessNode(traversedNode);
+        auto tempNodeVector = ProcessNode(traversedNode);
 
         // insert the nodes into the vector
         resultSubNodeVector.insert(resultSubNodeVector.end(), tempNodeVector.begin(), tempNodeVector.end());
@@ -258,7 +262,7 @@ vector<Node> SolutionTree::ProcessNodeVector(vector<Node> nodeVecToBeProcessed)
 
     auto countSize = [](vector<int> v)
     {
-        int s = 0;
+        auto s = 0;
         for (auto i : v)
         {
             s += i;
@@ -310,7 +314,7 @@ vector<CubeDecomposition> SolutionTree::PossibleCubeDecompositions(int log2CubeS
 
 vector<CubeDecomposition> SolutionTree::PossibleCubeDecompositionsHelper(int remainingLog2CubeSize, vector<CubeDecomposition> partialDecompositions, vector<int> remainingDegrees) const
 {
-    vector<CubeDecomposition> ret;
+    auto ret = vector<CubeDecomposition>{};
     // here remainingDegrees keeps d1, d2, ..., d(k-1)
     if (remainingDegrees.size() == 1)
     {
@@ -319,7 +323,7 @@ vector<CubeDecomposition> SolutionTree::PossibleCubeDecompositionsHelper(int rem
         for (auto s = 0; s <= *(remainingDegrees.rbegin()); ++s)
         {
             auto l = remainingLog2CubeSize - s;
-            if (l > _accuracy)
+            if (l > _accuracy || l < 0)
             {
                 // the line number exceeds the hight of the matrix
                 continue;
@@ -330,7 +334,7 @@ vector<CubeDecomposition> SolutionTree::PossibleCubeDecompositionsHelper(int rem
             auto possibleCubes = PossibleLineCubeVectors(s, *remainingDegrees.rbegin());
             for (auto cube : possibleCubes)
             {
-                for (auto cubeDecomp : partialDecompositions) // TODO: if partialDecompositions is empty
+                for (auto cubeDecomp : partialDecompositions) // 
                 {
                     auto newCubeDecomp = cubeDecomp;
                     // assume newCubeDecomp = (0, ([1, 0])), here first = 0 means unset.
@@ -354,7 +358,7 @@ vector<CubeDecomposition> SolutionTree::PossibleCubeDecompositionsHelper(int rem
     // first get the partial decompositions
     for (auto s = 0; s <= *(remainingDegrees.rbegin()); ++s)
     {
-        vector<CubeDecomposition> partialDecompositionsToPass;
+        auto partialDecompositionsToPass = vector<CubeDecomposition>{};
         // if this is the first level of recursion, we assume partialDecompositions.second
         // is empty, i.e., it is (0, ())
         auto possibleCubes = PossibleLineCubeVectors(s, *remainingDegrees.rbegin());
@@ -381,9 +385,9 @@ vector<CubeDecomposition> SolutionTree::PossibleCubeDecompositionsHelper(int rem
 
 vector<MintermVector> SolutionTree::PossibleLineCubeVectors(int log2CubeSize, int degree) const
 {
-    vector<MintermVector> ret;
+    auto ret = vector<MintermVector>{};
 
-    auto powAcc = static_cast<int>(pow(2, _accuracy));
+    auto powAcc = int(pow(2, _accuracy));
 
     for (auto zeroBefore = 0; zeroBefore <= degree - log2CubeSize; ++zeroBefore)
     {
@@ -397,7 +401,7 @@ vector<MintermVector> SolutionTree::PossibleLineCubeVectors(int log2CubeSize, in
         for (auto i = 0; i <= log2CubeSize; ++i)
         {
             auto mintermCountAtPositionI = choose(log2CubeSize, i);
-            line.push_back(mintermCountAtPositionI);
+            line.push_back(int(mintermCountAtPositionI));
         }
 
         for (auto i = 0; i < degree - log2CubeSize - zeroBefore; ++i)
@@ -412,8 +416,8 @@ vector<MintermVector> SolutionTree::PossibleLineCubeVectors(int log2CubeSize, in
 
 AssMat SolutionTree::AssignMatrixByEspresso(AssMat originalAssMat, CubeDecomposition cubeDecompositionToBeAssigned) const
 {
-    // TODO: finish this
-    auto powAcc = static_cast<int>(pow(2, _accuracy));
+    auto powAcc = int(pow(2, _accuracy));
+    auto lineNeeded = int(pow(2, cubeDecompositionToBeAssigned.first));
 
     // input example 2^1 [1,1,0] [1,1]
     // we could use std::set to impliment assignment vector
@@ -428,7 +432,7 @@ AssMat SolutionTree::AssignMatrixByEspresso(AssMat originalAssMat, CubeDecomposi
     // for each MintermVector in the cubeDecompositionToBeAssigned
     // we find its assignment set
     
-    auto assignmentSetsVector = vector<vector<set<string>>>();
+    auto assignmentSetsVector = vector<vector<set<string>>>{};
 
     // find all assignment sets for each cube vector
     for (auto mintermVec : cubeDecompositionToBeAssigned.second)
@@ -445,10 +449,10 @@ AssMat SolutionTree::AssignMatrixByEspresso(AssMat originalAssMat, CubeDecomposi
     auto assignmentSetsOfStringForCubeDecomposition = FindAssignmentSetsOfStringForCubeDecomposition(assignmentSetsVector);
 
     // transform the string version to integer version
-    auto assignmentSetsOfIntForCubeDecomposition = vector<set<int>>();
+    auto assignmentSetsOfIntForCubeDecomposition = vector<set<int>>{};
     for (auto setOfString : assignmentSetsOfStringForCubeDecomposition)
     {
-        auto setOfInt = set<int>();
+        auto setOfInt = set<int>{};
         for (auto str : setOfString)
         {
             setOfInt.insert(BinToInt(str));
@@ -464,8 +468,8 @@ AssMat SolutionTree::AssignMatrixByEspresso(AssMat originalAssMat, CubeDecomposi
         // find all available lines that can put the current assignment in
         // for example, find all lines that the columns 100, 101, 110, 111 
         // are still 0's for the assignment set {100, 101, 110, 111}
-        auto availableLines = vector<int>();
-        for (auto lineNo = 0; lineNo < originalAssMat.size(); ++lineNo)
+        auto availableLines = vector<int>{};
+        for (auto lineNo = 0; lineNo < static_cast<int>(originalAssMat.size()); ++lineNo)
         {
             auto available = true;
             auto currentLine = originalAssMat[lineNo];
@@ -485,7 +489,7 @@ AssMat SolutionTree::AssignMatrixByEspresso(AssMat originalAssMat, CubeDecomposi
         }
 
         // check wheather the line number is enough
-        if (availableLines.size() < cubeDecompositionToBeAssigned.first)
+        if (int(availableLines.size()) < lineNeeded)
         {
             ++assignmentSetIt;
             if (assignmentSetIt == assignmentSetsOfIntForCubeDecomposition.end())
@@ -497,7 +501,7 @@ AssMat SolutionTree::AssignMatrixByEspresso(AssMat originalAssMat, CubeDecomposi
         }
 
         // write line numbers to file
-        ofstream ofs("acc.pla");
+        auto ofs = ofstream("acc.pla");
         ofs << ".i " << _accuracy << endl << ".o 1" << endl;
         for (auto ix : availableLines)
         {
@@ -507,20 +511,20 @@ AssMat SolutionTree::AssignMatrixByEspresso(AssMat originalAssMat, CubeDecomposi
 
         system("mvsis50720.exe -c \"read_pla acc.pla; espresso; print;\" > acc.txt");
 
-        ofstream ofs_acc("acc.txt", ofstream::app);
+        auto ofs_acc = ofstream("acc.txt", ofstream::app);
         ofs_acc << " end_of_file" << endl;
         ofs_acc.close();
 
-        ifstream ifs_acc("acc.txt");
+        auto ifs_acc = ifstream("acc.txt");
         auto tempStr = string();
         ifs_acc >> tempStr >> tempStr; // "{z0}" and ":"
         auto minLiteralCount = INT_MAX;
-        auto bestCube = vector<string>(); // the form is like [x0 x3' x4]
+        auto bestCube = vector<string>{}; // the form is like [x0 x3' x4]
 
         auto endOfFile = false;
         while (!endOfFile)
         {
-            auto tempBestCube = vector<string>();
+            auto tempBestCube = vector<string>{};
             while (ifs_acc >> tempStr)
             {
                 if (tempStr == "Constant")
@@ -538,7 +542,7 @@ AssMat SolutionTree::AssignMatrixByEspresso(AssMat originalAssMat, CubeDecomposi
                 tempStr.erase(tempStr.begin());
                 tempBestCube.push_back(tempStr);
             }
-            if (tempBestCube.size() < minLiteralCount)
+            if (int(tempBestCube.size()) < minLiteralCount)
             {
                 minLiteralCount = tempBestCube.size();
                 bestCube = tempBestCube;
@@ -546,8 +550,8 @@ AssMat SolutionTree::AssignMatrixByEspresso(AssMat originalAssMat, CubeDecomposi
         }
 
         // all column-cubes are smaller than the line we need
-        auto availLineNo = static_cast<int>(pow(2, _accuracy - minLiteralCount));
-        if (availLineNo < cubeDecompositionToBeAssigned.first)
+        auto availLineNo = int(pow(2, _accuracy - minLiteralCount));
+        if (availLineNo < lineNeeded)
         {
             ++assignmentSetIt;
             continue;
@@ -556,7 +560,7 @@ AssMat SolutionTree::AssignMatrixByEspresso(AssMat originalAssMat, CubeDecomposi
         // after this scope, there must have an available assignment
 
         auto pattern = string(_accuracy, 'z'); // z0z
-        for (auto litNoInBestCube = 0; litNoInBestCube < bestCube.size(); ++litNoInBestCube)
+        for (auto litNoInBestCube = 0; litNoInBestCube < static_cast<int>(bestCube.size()); ++litNoInBestCube)
         {
             auto currentCubeStr = bestCube[litNoInBestCube]; // x3'
             auto ss = stringstream();
@@ -577,15 +581,15 @@ AssMat SolutionTree::AssignMatrixByEspresso(AssMat originalAssMat, CubeDecomposi
             }
         }
         auto restAcc = _accuracy - bestCube.size();
-        auto powRestAcc = static_cast<int>(pow(2, restAcc));
-        auto lineNumberOccupiedByCube = (powRestAcc < cubeDecompositionToBeAssigned.first) ? powRestAcc : cubeDecompositionToBeAssigned.first;
-        auto assignLines = vector<int>();
+        auto powRestAcc = int(pow(2, restAcc));
+        auto lineNumberOccupiedByCube = (powRestAcc < lineNeeded) ? powRestAcc : lineNeeded;
+        auto assignLines = vector<int>{};
         for (auto ii = 0; ii < lineNumberOccupiedByCube; ++ii)
         {
             auto tempString = IntToBin(ii, restAcc - 1);
             auto tempStringIndex = 0;
             auto tempPattern = pattern; // x0x -> 100
-            for (auto jj = 0; jj < tempPattern.size(); ++jj)
+            for (auto jj = 0; jj < int(tempPattern.size()); ++jj)
             {
                 if (tempPattern[jj] == 'z')
                 {
@@ -617,7 +621,7 @@ vector<set<string>> SolutionTree::FindAssignmentSetsOfStringForMintermVector(Min
     // find the first non-zero term in lineCubeVector
     // because the number of zeros in the beginning
     // is the number of un-complemented X-variables
-    for (; countOfOne < lineCubeVector.size(); ++countOfOne)
+    for (; countOfOne < int(lineCubeVector.size()); ++countOfOne)
     {
         if (lineCubeVector[countOfOne] == 0) continue;
         break;
@@ -626,7 +630,7 @@ vector<set<string>> SolutionTree::FindAssignmentSetsOfStringForMintermVector(Min
     auto countOfMinterm = 0;
 
     // find the count of minterms
-    for (auto i = countOfOne; i < lineCubeVector.size(); ++i)
+    for (auto i = countOfOne; i < int(lineCubeVector.size()); ++i)
     {
         countOfMinterm += lineCubeVector[i];
     }
@@ -635,7 +639,7 @@ vector<set<string>> SolutionTree::FindAssignmentSetsOfStringForMintermVector(Min
     // number of complemented X-variables
     // it's d - t - r, d = size - 1, t = countOfOne, r = log2(countOfMinterm)
     // since countOfMinterm = choose(r, 0) + choose(r, 1) + ... + choose(r, r)
-    auto countOfZero = lineCubeVector.size() - 1 - countOfOne - static_cast<int>(log2(countOfMinterm));
+    auto countOfZero = lineCubeVector.size() - 1 - countOfOne - int(log2(countOfMinterm));
 
     // then we have all of the information we need
 
@@ -652,7 +656,7 @@ vector<set<string>> SolutionTree::FindAssignmentSetsOfStringForMintermVector(Min
 
 set<string> SolutionTree::BuildBasicAssignmentSet(int mintermCount) const
 {
-    auto ret = set<string>();
+    auto ret = set<string>{};
 
     // if the cube has only one minterm, like [0, 1, 0]
     // its basic assignment set is defined as {""}
@@ -662,7 +666,7 @@ set<string> SolutionTree::BuildBasicAssignmentSet(int mintermCount) const
         return ret;
     }
 
-    auto log2MintermCount = static_cast<int>(log2(mintermCount));
+    auto log2MintermCount = int(log2(mintermCount));
     auto grayCode = ConstructGrayCode(log2MintermCount);
 
     for (auto i : grayCode)
@@ -675,19 +679,19 @@ set<string> SolutionTree::BuildBasicAssignmentSet(int mintermCount) const
 
 vector<set<string>> SolutionTree::BuildAssignmentSet(set<string> basicAssignmentSet, int countOfZero, int countOfOne)
 {
-    auto ret = vector<set<string>>();
+    auto ret = vector<set<string>>{};
     auto zeroOneTwoPermutation = BuildZeroOneTwoPermutation(countOfZero, basicAssignmentSet.begin()->size(), countOfOne);
 
     for (auto pattern : zeroOneTwoPermutation)
     {
-        auto tempAssignmentSet = set<string>();
+        auto tempAssignmentSet = set<string>{};
 
         for (auto str : basicAssignmentSet)
         {
             auto pos = 0;
             auto res = string();
 
-            for (auto i = 0; i < pattern.size(); ++i)
+            for (auto i = 0; i < static_cast<int>(pattern.size()); ++i)
             {
                 if (pattern[i] == '0')
                 {
@@ -718,7 +722,7 @@ vector<set<string>> SolutionTree::FindAssignmentSetsOfStringForCubeDecomposition
 {
     assert(!remainingAssignmentSetsVector.empty());
 
-    auto setVec = vector<set<string>>();
+    auto setVec = vector<set<string>>{};
     for (auto set1 : currentAssignmentSets)
     {
         for (auto set2 : remainingAssignmentSetsVector[0])
@@ -815,7 +819,7 @@ bool CapacityConstraintSatisfied(vector<int> problemVector, MintermVector cubeVe
 {
     assert(problemVector.size() == cubeVector.size());
 
-    for (auto i = 0; i < problemVector.size(); ++i)
+    for (auto i = 0; i < static_cast<int>(problemVector.size()); ++i)
     {
         if (problemVector[i] < cubeVector[i]) return false;
     }
@@ -825,7 +829,7 @@ bool CapacityConstraintSatisfied(vector<int> problemVector, MintermVector cubeVe
 MintermVector SubtractCube(MintermVector problemVector, MintermVector cube)
 {
     assert(CapacityConstraintSatisfied(problemVector, cube));
-    for (auto i = 0; i < problemVector.size(); ++i)
+    for (auto i = 0; i < static_cast<int>(problemVector.size()); ++i)
     {
         problemVector[i] -= cube[i];
     }
@@ -858,7 +862,7 @@ long long int choose(int n, int k)
 
 vector<int> ConstructGrayCode(int size)
 {
-    auto grayCode = vector<int>();
+    auto grayCode = vector<int>{};
     grayCode.push_back(0);
     grayCode.push_back(1);
 
@@ -872,8 +876,8 @@ vector<int> ConstructGrayCode(int size)
 
 vector<int> ConstructGrayCodeHelper(vector<int> grayCode)
 {
-    auto ret = vector<int>();
-    for (auto i = 0; i < grayCode.size(); ++i)
+    auto ret = vector<int>{};
+    for (auto i = 0; i < int(grayCode.size()); ++i)
     {
         if (i % 2 == 0)
         {
@@ -904,7 +908,7 @@ vector<string> BuildZeroOneTwoPermutation(int countOfZero, int countOfOne, int c
 
 set<string> MultiplyAssignmentSets(set<string> set1, set<string> set2)
 {
-    auto ret = set<string>();
+    auto ret = set<string>{};
     for (auto str1 : set1)
     {
         for (auto str2 : set2)
