@@ -48,6 +48,39 @@ void SolutionTree::ProcessTree()
     }
 
     // TODO finish the display part
+
+    cout << "Node processed: " << processedNodeNumber << endl << endl;
+
+    // TODO: check the optimal node is not empty
+
+    assert(!_optimalNode._assignedAssMat.empty());
+
+    // Display the result
+    cout << "BEGIN: display final result" << endl;
+    cout << "The matrix is" << endl;
+    for (auto line : _optimalNode._assignedAssMat)
+    {
+        cout << line << endl;
+    }
+    cout << "The assigned cube decompositions are" << endl;
+    for (auto cDcmp : _optimalNode._assignedCubeDecompositions)
+    {
+        cout << "2^" << cDcmp.first;
+        for (auto c : cDcmp.second)
+        {
+            cout << " X [ ";
+            for (auto m : c)
+            {
+                cout << m << " ";
+            }
+            cout << "]";
+        }
+        cout << endl;
+    }
+    cout << "The minimum literal number is " << _minLiteralCount << endl;
+    //cout << "The branch number is " << _nodeNumber << endl;
+    cout << "END: display final result" << endl;
+    cout << endl;
 }
 
 vector<Node> SolutionTree::ProcessNode(Node currentNode)

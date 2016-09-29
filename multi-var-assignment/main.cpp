@@ -40,7 +40,7 @@ int main(int argc, char* argv[])
     {
         cout << d << " ";
     }
-    cout << endl;
+    cout << endl << endl;
 
     while (getline(ifs, line))
     {
