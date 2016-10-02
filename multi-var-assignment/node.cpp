@@ -18,11 +18,9 @@ SolutionTree::SolutionTree(vector<int> initialProblemVector, vector<int> degrees
     auto powAccuracy = int(pow(2, _accuracy));
     auto assignmentMatrix = AssMat(powAccuracy, string(lengthOfTotalCube, '0'));
 
-    auto root = Node(assignmentMatrix, initialProblemVector, 0, unordered_multiset<CubeDecomposition>(), CubeDecomposition(), 0); // TODO: fill this after complete the constructor of Node
+    auto root = Node(assignmentMatrix, initialProblemVector, 0, unordered_multiset<CubeDecomposition>(), CubeDecomposition(), 0);
 
     _nodeVector.push_back(root);
-
-    // initialize Gray code vector TODO
 
     // initialize other data
     _updateTime = 0;
@@ -47,12 +45,9 @@ void SolutionTree::ProcessTree()
         processedNodeNumber += _nodeVector.size();
     }
 
-    // TODO finish the display part
-
     cout << "Node processed: " << processedNodeNumber << endl << endl;
 
-    // TODO: check the optimal node is not empty
-
+    assert(IsZeroMintermVector(_optimalNode._remainingProblemVector));
     assert(!_optimalNode._assignedAssMat.empty());
 
     // Display the result
@@ -81,6 +76,26 @@ void SolutionTree::ProcessTree()
     //cout << "The branch number is " << _nodeNumber << endl;
     cout << "END: display final result" << endl;
     cout << endl;
+
+    // write the .pla file
+    stringstream ss;
+    ss << "pla\\";
+    ss.fill('0');
+    ss.width(2);
+    ss << _caseNumber << ".pla";
+    auto plaFile = ofstream(ss.str());
+    plaFile << ".i " << _log2LengthOfTotalCube + _accuracy << endl;
+    plaFile << ".o 1" << endl;
+
+    for (auto line = 0; line < int(_optimalNode._assignedAssMat.size()); ++line)
+    {
+        for (auto col = 0; col < int(_optimalNode._assignedAssMat[line].size()); ++col)
+        {
+            if (_optimalNode._assignedAssMat[line][col] == '0') continue;
+            plaFile << IntToBin(col, _log2LengthOfTotalCube - 1) << IntToBin(line, _accuracy - 1) << " 1" << endl;
+        }
+    }
+    plaFile << ".e" << endl;
 }
 
 vector<Node> SolutionTree::ProcessNode(Node currentNode)
