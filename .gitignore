@@ -248,3 +248,4 @@ ModelManifest.xml
 /multi-var-assignment/vector.txt
 /multi-var-assignment/temp.pla
 /multi-var-assignment/tempres.txt
+/multi-var-assignment/pla/*.pla
