@@ -167,8 +167,8 @@ vector<Node> SolutionTree::ProcessNode(Node currentNode)
                 // if this cube set is processed before
                 // prune it and display the deletion
                 // comment out
-                cout << "** BEGIN:Pruning DUPE cube set **" << endl;
-                cout << "Following decomposition is duped: " << endl;
+                //cout << "** BEGIN:Pruning DUPE cube set **" << endl;
+                //cout << "Following decomposition is duped: " << endl;
                 // TODO: display the decomposition
             }
 
@@ -328,20 +328,20 @@ vector<Node> SolutionTree::ProcessNodeVector(vector<Node> nodeVecToBeProcessed)
         auto v1 = n1._lastAssignedCubeDecomposition;
         auto v2 = n2._lastAssignedCubeDecomposition;
 
-        int size1 = countSize(multiply(v1.second));
-        int size2 = countSize(multiply(v2.second));
+        int size1 = countSize(multiply(int(pow(2, v1.first)), multiply(v1.second)));
+        int size2 = countSize(multiply(int(pow(2, v2.first)), multiply(v2.second)));
 
-        return (size1 < size2);
+        return (size1 > size2);
     });
 
     int smallestLiteralCount = resultSubNodeVector[0]._literalCountSoFar;
-    int smallestCubeSize = countSize(multiply(resultSubNodeVector[0]._lastAssignedCubeDecomposition.second));
+    int smallestCubeSize = countSize(multiply(int(pow(2, resultSubNodeVector[0]._lastAssignedCubeDecomposition.first)), multiply(resultSubNodeVector[0]._lastAssignedCubeDecomposition.second)));
 
     auto delIt = resultSubNodeVector.end();
 
     for (auto it = resultSubNodeVector.begin(); it != resultSubNodeVector.end(); ++it)
     {
-        int size = countSize(multiply((it->_lastAssignedCubeDecomposition).second));
+        int size = countSize(multiply(int(pow(2, (it->_lastAssignedCubeDecomposition).first)), multiply((it->_lastAssignedCubeDecomposition).second)));
         if ((it->_literalCountSoFar != smallestLiteralCount) || (size != smallestCubeSize))
         {
             delIt = it;
