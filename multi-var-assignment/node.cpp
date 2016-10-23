@@ -166,6 +166,7 @@ vector<Node> SolutionTree::ProcessNode(Node currentNode)
             {
                 // if this cube set is processed before
                 // prune it and display the deletion
+                continue;
                 // comment out
                 //cout << "** BEGIN:Pruning DUPE cube set **" << endl;
                 //cout << "Following decomposition is duped: " << endl;
