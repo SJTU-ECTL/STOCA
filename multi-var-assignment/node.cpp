@@ -1,5 +1,7 @@
 #include "node.h"
 
+unordered_map<int, vector<CubeDecomposition>> unorderedMapOfPossibleCubeDecompositionVector;
+
 SolutionTree::SolutionTree(vector<int> initialProblemVector, vector<int> degrees, int accuracy, int caseNumber)
 {
     // NOTE: _log2LengthOfTotalCube equals to d1 + d2 + ... + dk
@@ -31,7 +33,7 @@ SolutionTree::SolutionTree(vector<int> initialProblemVector, vector<int> degrees
 
 void SolutionTree::ProcessTree()
 {
-    int processedNodeNumber = _nodeVector.size();
+    auto processedNodeNumber = int(_nodeVector.size());
 
     while (!_nodeVector.empty())
     {
@@ -42,7 +44,7 @@ void SolutionTree::ProcessTree()
         _nodeVector = nodeVectorOfNextLevel;
 
         // add to the count
-        processedNodeNumber += _nodeVector.size();
+        processedNodeNumber += int(_nodeVector.size());
     }
 
     cout << "Node processed: " << processedNodeNumber << endl << endl;
@@ -126,11 +128,20 @@ vector<Node> SolutionTree::ProcessNode(Node currentNode)
     // the main loop;
     while (!found && (log2MintermCount >= 0))
     {
-        // originally, the function here is "possibleCubes"
-        // but for multi-var, it should return possible cube 
-        // decompositions -- CubeDecomposition, 
-        // i.e., vector<int, vector<MintermVector>>
-        auto possibleCubeDecompositionVector = PossibleCubeDecompositions(log2MintermCount);
+        auto possibleCubeDecompositionVector = vector<CubeDecomposition>{};
+        if (unorderedMapOfPossibleCubeDecompositionVector[log2MintermCount].empty())
+        {
+            // originally, the function here is "possibleCubes"
+            // but for multi-var, it should return possible cube 
+            // decompositions -- CubeDecomposition, 
+            // i.e., vector<int, vector<MintermVector>>
+            possibleCubeDecompositionVector = PossibleCubeDecompositions(log2MintermCount, _degrees, _accuracy);
+            unorderedMapOfPossibleCubeDecompositionVector[log2MintermCount] = possibleCubeDecompositionVector;
+        }
+        else
+        {
+            possibleCubeDecompositionVector = unorderedMapOfPossibleCubeDecompositionVector[log2MintermCount];
+        }
 
         // traverse all of the possible cube decompositions
 
@@ -356,116 +367,8 @@ vector<Node> SolutionTree::ProcessNodeVector(vector<Node> nodeVecToBeProcessed)
     return resultSubNodeVector;
 }
 
-vector<CubeDecomposition> SolutionTree::PossibleCubeDecompositions(int log2CubeSize) const
-{
-    return PossibleCubeDecompositionsHelper(log2CubeSize, vector<CubeDecomposition>{make_pair(0, vector<MintermVector>())}, _degrees);
-}
-
-vector<CubeDecomposition> SolutionTree::PossibleCubeDecompositionsHelper(int remainingLog2CubeSize, vector<CubeDecomposition> partialDecompositions, vector<int> remainingDegrees) const
-{
-    auto ret = vector<CubeDecomposition>{};
-    // here remainingDegrees keeps d1, d2, ..., d(k-1)
-    if (remainingDegrees.size() == 1)
-    {
-        // if it is the last variable, use loop to find all decompositions
-        // l + s_1 = N'
-        for (auto s = 0; s <= *(remainingDegrees.rbegin()); ++s)
-        {
-            auto l = remainingLog2CubeSize - s;
-            if (l > _accuracy || l < 0)
-            {
-                // the line number exceeds the hight of the matrix
-                continue;
-            }
-            // if l satisfies the constraint, then find all possible vectors
-            // for s_1. We should notice that there are 2^s_1 minterms and the vector
-            // is a line cube vector.
-            auto possibleCubes = PossibleLineCubeVectors(s, *remainingDegrees.rbegin());
-            for (auto cube : possibleCubes)
-            {
-                for (auto cubeDecomp : partialDecompositions) // 
-                {
-                    auto newCubeDecomp = cubeDecomp;
-                    // assume newCubeDecomp = (0, ([1, 0])), here first = 0 means unset.
-                    // assign the log2 line number l, assume it's 2
-                    newCubeDecomp.first = l;
-                    // then newCubeDecomp = (2, ([1, 0]))
-                    // assume cube = [1, 1, 0],
-                    newCubeDecomp.second.insert(newCubeDecomp.second.begin(), cube);
-                    // now newCubeDecomp = (2, ([1, 1, 0], [1, 0]))
-                    // it means 2^2 X [1, 1, 0] X [1, 0] = [4, 4, 0, 0, 0, 0]
-                    ret.push_back(newCubeDecomp);
-                }
-            }
-        }
-
-        return ret;
-    }
-
-    // if the remainingDegrees has more than one term
-    // i.e., d1, d2, ..., dk
-    // first get the partial decompositions
-    for (auto s = 0; s <= *(remainingDegrees.rbegin()); ++s)
-    {
-        auto partialDecompositionsToPass = vector<CubeDecomposition>{};
-        // if this is the first level of recursion, we assume partialDecompositions.second
-        // is empty, i.e., it is (0, ())
-        auto possibleCubes = PossibleLineCubeVectors(s, *remainingDegrees.rbegin());
-
-        for (auto cube : possibleCubes)
-        {
-            for (auto cubeDecomp : partialDecompositions)
-            {
-                auto newCubeDecomp = cubeDecomp;
-                newCubeDecomp.second.insert(newCubeDecomp.second.begin(), cube);
-                partialDecompositionsToPass.push_back(newCubeDecomp);
-            }
-        }
-
-        auto remainingDegreesToPass = remainingDegrees;
-        remainingDegreesToPass.pop_back();
-
-        auto results = PossibleCubeDecompositionsHelper(remainingLog2CubeSize - s, partialDecompositionsToPass, remainingDegreesToPass);
-        ret.insert(ret.end(), results.begin(), results.end());
-    }
-
-    return ret;
-}
-
-vector<MintermVector> SolutionTree::PossibleLineCubeVectors(int log2CubeSize, int degree) const
-{
-    auto ret = vector<MintermVector>{};
-
-    auto powAcc = int(pow(2, _accuracy));
-
-    for (auto zeroBefore = 0; zeroBefore <= degree - log2CubeSize; ++zeroBefore)
-    {
-        MintermVector line;
-
-        for (auto i = 0; i < zeroBefore; ++i)
-        {
-            line.push_back(0);
-        }
-
-        for (auto i = 0; i <= log2CubeSize; ++i)
-        {
-            auto mintermCountAtPositionI = choose(log2CubeSize, i);
-            line.push_back(int(mintermCountAtPositionI));
-        }
-
-        for (auto i = 0; i < degree - log2CubeSize - zeroBefore; ++i)
-        {
-            line.push_back(0);
-        }
-
-        ret.push_back(line);
-    }
-    return ret;
-}
-
 AssMat SolutionTree::AssignMatrixByEspresso(AssMat originalAssMat, CubeDecomposition cubeDecompositionToBeAssigned) const
 {
-    auto powAcc = int(pow(2, _accuracy));
     auto lineNeeded = int(pow(2, cubeDecompositionToBeAssigned.first));
 
     // input example 2^1 [1,1,0] [1,1]
@@ -518,7 +421,7 @@ AssMat SolutionTree::AssignMatrixByEspresso(AssMat originalAssMat, CubeDecomposi
         // for example, find all lines that the columns 100, 101, 110, 111 
         // are still 0's for the assignment set {100, 101, 110, 111}
         auto availableLines = vector<int>{};
-        for (auto lineNo = 0; lineNo < static_cast<int>(originalAssMat.size()); ++lineNo)
+        for (auto lineNo = 0; lineNo < int(originalAssMat.size()); ++lineNo)
         {
             auto available = true;
             auto currentLine = originalAssMat[lineNo];
@@ -593,7 +496,7 @@ AssMat SolutionTree::AssignMatrixByEspresso(AssMat originalAssMat, CubeDecomposi
             }
             if (int(tempBestCube.size()) < minLiteralCount)
             {
-                minLiteralCount = tempBestCube.size();
+                minLiteralCount = int(tempBestCube.size());
                 bestCube = tempBestCube;
             }
         }
@@ -609,7 +512,7 @@ AssMat SolutionTree::AssignMatrixByEspresso(AssMat originalAssMat, CubeDecomposi
         // after this scope, there must have an available assignment
 
         auto pattern = string(_accuracy, 'z'); // z0z
-        for (auto litNoInBestCube = 0; litNoInBestCube < static_cast<int>(bestCube.size()); ++litNoInBestCube)
+        for (auto litNoInBestCube = 0; litNoInBestCube < int(bestCube.size()); ++litNoInBestCube)
         {
             auto currentCubeStr = bestCube[litNoInBestCube]; // x3'
             auto ss = stringstream();
@@ -629,7 +532,7 @@ AssMat SolutionTree::AssignMatrixByEspresso(AssMat originalAssMat, CubeDecomposi
                 pattern[N] = '1'; // it is un-complemented form
             }
         }
-        auto restAcc = _accuracy - bestCube.size();
+        auto restAcc = _accuracy - int(bestCube.size());
         auto powRestAcc = int(pow(2, restAcc));
         auto lineNumberOccupiedByCube = (powRestAcc < lineNeeded) ? powRestAcc : lineNeeded;
         auto assignLines = vector<int>{};
@@ -688,7 +591,7 @@ vector<set<string>> SolutionTree::FindAssignmentSetsOfStringForMintermVector(Min
     // number of complemented X-variables
     // it's d - t - r, d = size - 1, t = countOfOne, r = log2(countOfMinterm)
     // since countOfMinterm = choose(r, 0) + choose(r, 1) + ... + choose(r, r)
-    auto countOfZero = lineCubeVector.size() - 1 - countOfOne - int(log2(countOfMinterm));
+    auto countOfZero = int(lineCubeVector.size()) - 1 - countOfOne - int(log2(countOfMinterm));
 
     // then we have all of the information we need
 
@@ -723,42 +626,6 @@ set<string> SolutionTree::BuildBasicAssignmentSet(int mintermCount) const
         ret.insert(IntToBin(i, log2MintermCount - 1));
     }
 
-    return ret;
-}
-
-vector<set<string>> SolutionTree::BuildAssignmentSet(set<string> basicAssignmentSet, int countOfZero, int countOfOne)
-{
-    auto ret = vector<set<string>>{};
-    auto zeroOneTwoPermutation = BuildZeroOneTwoPermutation(countOfZero, basicAssignmentSet.begin()->size(), countOfOne);
-
-    for (auto pattern : zeroOneTwoPermutation)
-    {
-        auto tempAssignmentSet = set<string>{};
-
-        for (auto str : basicAssignmentSet)
-        {
-            auto pos = 0;
-            auto res = string();
-
-            for (auto i = 0; i < static_cast<int>(pattern.size()); ++i)
-            {
-                if (pattern[i] == '0')
-                {
-                    res += "0";
-                }
-                else if (pattern[i] == '2')
-                {
-                    res += "1";
-                }
-                else
-                {
-                    res += str[pos++];
-                }
-            }
-            tempAssignmentSet.insert(res);
-        }
-        ret.push_back(tempAssignmentSet);
-    }
     return ret;
 }
 
@@ -836,13 +703,13 @@ MintermVector multiply(vector<MintermVector> cubeVecs)
 
 string IntToBin(int num, int highestDegree)
 {
-    assert(num < static_cast<int>(pow(2, highestDegree + 1)));
+    assert(num < int(pow(2, highestDegree + 1)));
 
     string ret;
 
     while (num)
     {
-        char digit = static_cast<char>((num & 1) + '0');
+        auto digit = char((num & 1) + '0');
         ret.insert(ret.begin(), 1, digit);
 
         num >>= 1;
@@ -859,7 +726,7 @@ int BinToInt(string str)
     for (auto ch : str)
     {
         ret <<= 1;
-        ret |= static_cast<int>(ch - '0');
+        ret |= int(ch - '0');
     }
     return ret;
 }
@@ -868,7 +735,7 @@ bool CapacityConstraintSatisfied(vector<int> problemVector, MintermVector cubeVe
 {
     assert(problemVector.size() == cubeVector.size());
 
-    for (auto i = 0; i < static_cast<int>(problemVector.size()); ++i)
+    for (auto i = 0; i < int(problemVector.size()); ++i)
     {
         if (problemVector[i] < cubeVector[i]) return false;
     }
@@ -878,7 +745,7 @@ bool CapacityConstraintSatisfied(vector<int> problemVector, MintermVector cubeVe
 MintermVector SubtractCube(MintermVector problemVector, MintermVector cube)
 {
     assert(CapacityConstraintSatisfied(problemVector, cube));
-    for (auto i = 0; i < static_cast<int>(problemVector.size()); ++i)
+    for (auto i = 0; i < int(problemVector.size()); ++i)
     {
         problemVector[i] -= cube[i];
     }
@@ -987,6 +854,147 @@ set<string> MultiplyAssignmentSets(vector<set<string>> sets)
     sets[0] = prod;
 
     return MultiplyAssignmentSets(sets);
+}
+
+vector<CubeDecomposition> PossibleCubeDecompositions(int log2CubeSize, vector<int> degrees, int accuracy)
+{
+    return PossibleCubeDecompositionsHelper(log2CubeSize, vector<CubeDecomposition>{make_pair(0, vector<MintermVector>())}, degrees, accuracy);
+}
+
+vector<CubeDecomposition> PossibleCubeDecompositionsHelper(int remainingLog2CubeSize, vector<CubeDecomposition> partialDecompositions, vector<int> remainingDegrees, int accuracy)
+{
+    auto ret = vector<CubeDecomposition>{};
+    // here remainingDegrees keeps d1, d2, ..., d(k-1)
+    if (remainingDegrees.size() == 1)
+    {
+        // if it is the last variable, use loop to find all decompositions
+        // l + s_1 = N'
+        for (auto s = 0; s <= *(remainingDegrees.rbegin()); ++s)
+        {
+            auto l = remainingLog2CubeSize - s;
+            if (l > accuracy || l < 0)
+            {
+                // the line number exceeds the hight of the matrix
+                continue;
+            }
+            // if l satisfies the constraint, then find all possible vectors
+            // for s_1. We should notice that there are 2^s_1 minterms and the vector
+            // is a line cube vector.
+            auto possibleCubes = PossibleLineCubeVectors(s, *remainingDegrees.rbegin());
+            for (auto cube : possibleCubes)
+            {
+                for (auto cubeDecomp : partialDecompositions)
+                {
+                    auto newCubeDecomp = cubeDecomp;
+                    // assume newCubeDecomp = (0, ([1, 0])), here first = 0 means unset.
+                    // assign the log2 line number l, assume it's 2
+                    newCubeDecomp.first = l;
+                    // then newCubeDecomp = (2, ([1, 0]))
+                    // assume cube = [1, 1, 0],
+                    newCubeDecomp.second.insert(newCubeDecomp.second.begin(), cube);
+                    // now newCubeDecomp = (2, ([1, 1, 0], [1, 0]))
+                    // it means 2^2 X [1, 1, 0] X [1, 0] = [4, 4, 0, 0, 0, 0]
+                    ret.push_back(newCubeDecomp);
+                }
+            }
+        }
+
+        return ret;
+    }
+
+    // if the remainingDegrees has more than one term
+    // i.e., d1, d2, ..., dk
+    // first get the partial decompositions
+    for (auto s = 0; s <= *(remainingDegrees.rbegin()); ++s)
+    {
+        auto partialDecompositionsToPass = vector<CubeDecomposition>{};
+        // if this is the first level of recursion, we assume partialDecompositions.second
+        // is empty, i.e., it is (0, ())
+        auto possibleCubes = PossibleLineCubeVectors(s, *remainingDegrees.rbegin());
+
+        for (auto cube : possibleCubes)
+        {
+            for (auto cubeDecomp : partialDecompositions)
+            {
+                auto newCubeDecomp = cubeDecomp;
+                newCubeDecomp.second.insert(newCubeDecomp.second.begin(), cube);
+                partialDecompositionsToPass.push_back(newCubeDecomp);
+            }
+        }
+
+        auto remainingDegreesToPass = remainingDegrees;
+        remainingDegreesToPass.pop_back();
+
+        auto results = PossibleCubeDecompositionsHelper(remainingLog2CubeSize - s, partialDecompositionsToPass, remainingDegreesToPass, accuracy);
+        ret.insert(ret.end(), results.begin(), results.end());
+    }
+
+    return ret;
+}
+
+vector<MintermVector> PossibleLineCubeVectors(int log2CubeSize, int degree)
+{
+    auto ret = vector<MintermVector>{};
+
+    for (auto zeroBefore = 0; zeroBefore <= degree - log2CubeSize; ++zeroBefore)
+    {
+        MintermVector line;
+
+        for (auto i = 0; i < zeroBefore; ++i)
+        {
+            line.push_back(0);
+        }
+
+        for (auto i = 0; i <= log2CubeSize; ++i)
+        {
+            auto mintermCountAtPositionI = choose(log2CubeSize, i);
+            line.push_back(int(mintermCountAtPositionI));
+        }
+
+        for (auto i = 0; i < degree - log2CubeSize - zeroBefore; ++i)
+        {
+            line.push_back(0);
+        }
+
+        ret.push_back(line);
+    }
+    return ret;
+}
+
+vector<set<string>> BuildAssignmentSet(set<string> basicAssignmentSet, int countOfZero, int countOfOne)
+{
+    auto ret = vector<set<string>>{};
+    auto zeroOneTwoPermutation = BuildZeroOneTwoPermutation(countOfZero, int(basicAssignmentSet.begin()->size()), countOfOne);
+
+    for (auto pattern : zeroOneTwoPermutation)
+    {
+        auto tempAssignmentSet = set<string>{};
+
+        for (auto str : basicAssignmentSet)
+        {
+            auto pos = 0;
+            auto res = string();
+
+            for (auto i = 0; i < int(pattern.size()); ++i)
+            {
+                if (pattern[i] == '0')
+                {
+                    res += "0";
+                }
+                else if (pattern[i] == '2')
+                {
+                    res += "1";
+                }
+                else
+                {
+                    res += str[pos++];
+                }
+            }
+            tempAssignmentSet.insert(res);
+        }
+        ret.push_back(tempAssignmentSet);
+    }
+    return ret;
 }
 
 Node::Node(AssMat newAssMat, MintermVector newProblemVector, int newLevel, unordered_multiset<CubeDecomposition> newAssignedCubeDecompositions, CubeDecomposition lastAssignedCubeDecomposition, int literalCount)

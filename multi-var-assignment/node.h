@@ -38,6 +38,8 @@ typedef pair<int, vector<MintermVector>> CubeDecomposition;
 //    vector<MintermVector> cubeVectors;
 //};
 
+extern unordered_map<int, vector<CubeDecomposition>> unorderedMapOfPossibleCubeDecompositionVector;
+
 struct Node
 {
     // TODO: constructor to be written
@@ -85,22 +87,12 @@ public:
     // process the node vector, which has 
     vector<Node> ProcessNodeVector(vector<Node> nodeVecToBeProcessed);
 
-    // returns all of the possible cube decompositions
-    // INPUT: the log2 of the cube size
-    // OUTPUT: the vector of the possible CubeDecomposition
-    // NOTE: this method will use _accuracy and the _degrees
-    vector<CubeDecomposition> PossibleCubeDecompositions(int log2CubeSize) const;
-    vector<CubeDecomposition> PossibleCubeDecompositionsHelper(int remainingLog2CubeSize, vector<CubeDecomposition> partialDecompositions, vector<int> remainingDegrees) const;
-    vector<MintermVector> PossibleLineCubeVectors(int log2CubeSize, int degree) const;
-
     AssMat AssignMatrixByEspresso(AssMat originalAssMat, CubeDecomposition cubeDecompositionToBeAssigned) const;
 
     // find the assignment sets for a single vector
     vector<set<string>> FindAssignmentSetsOfStringForMintermVector(MintermVector lineCubeVector) const;
 
     set<string> BuildBasicAssignmentSet(int mintermCount) const;
-
-    static vector<set<string>> BuildAssignmentSet(set<string> basicAssignmentSet, int countOfZero, int countOfOne);
 
     // get all of the assignment sets by recursion, although the name is "ForCubeDecomposition"
     // the input is not a CubeDecomposition, but the assignment sets for each cube vector in the decomposition
@@ -162,5 +154,15 @@ vector<string> BuildZeroOneTwoPermutation(int countOfZero, int countOfOne, int c
 
 set<string> MultiplyAssignmentSets(set<string> set1, set<string> set2);
 set<string> MultiplyAssignmentSets(vector<set<string>> sets);
+
+// returns all of the possible cube decompositions
+// INPUT: the log2 of the cube size
+// OUTPUT: the vector of the possible CubeDecomposition
+// NOTE: this method will use _accuracy and the _degrees
+vector<CubeDecomposition> PossibleCubeDecompositions(int log2CubeSize, vector<int> degrees, int accuracy);
+vector<CubeDecomposition> PossibleCubeDecompositionsHelper(int remainingLog2CubeSize, vector<CubeDecomposition> partialDecompositions, vector<int> remainingDegrees, int accuracy);
+vector<MintermVector> PossibleLineCubeVectors(int log2CubeSize, int degree);
+
+vector<set<string>> BuildAssignmentSet(set<string> basicAssignmentSet, int countOfZero, int countOfOne);
 
 #endif

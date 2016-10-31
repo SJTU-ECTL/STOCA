@@ -44,8 +44,8 @@ namespace std {
             hash<T1> hasher1;
             hash<T2> hasher2;
             size_t seed = 0;
-            hasher1(pr.first) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-            hasher2(pr.second) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+            seed ^= hasher1(pr.first) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+            seed ^= hasher2(pr.second) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
 
             return seed;
         }
