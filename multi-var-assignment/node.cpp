@@ -333,17 +333,25 @@ vector<Node> SolutionTree::ProcessNodeVector(vector<Node> nodeVecToBeProcessed)
     // for each sub node we need to sort them by the size of extracted cube and the literal count
     sort(resultSubNodeVector.begin(), resultSubNodeVector.end(), [countSize](Node n1, Node n2)
     {
-        // if the literal count not equal
-        if (n1._literalCountSoFar < n2._literalCountSoFar) return true;
-        if (n1._literalCountSoFar > n2._literalCountSoFar) return false;
+        //// if the literal count not equal
+        //if (n1._literalCountSoFar < n2._literalCountSoFar) return true;
+        //if (n1._literalCountSoFar > n2._literalCountSoFar) return false;
+
+        //auto v1 = n1._lastAssignedCubeDecomposition;
+        //auto v2 = n2._lastAssignedCubeDecomposition;
+
+        //int size1 = countSize(multiply(int(pow(2, v1.first)), multiply(v1.second)));
+        //int size2 = countSize(multiply(int(pow(2, v2.first)), multiply(v2.second)));
+
+        //return (size1 > size2);
 
         auto v1 = n1._lastAssignedCubeDecomposition;
         auto v2 = n2._lastAssignedCubeDecomposition;
-
         int size1 = countSize(multiply(int(pow(2, v1.first)), multiply(v1.second)));
         int size2 = countSize(multiply(int(pow(2, v2.first)), multiply(v2.second)));
-
-        return (size1 > size2);
+        if (size1 > size2) return true;
+        if (size1 < size2) return false;
+        return (n1._literalCountSoFar < n2._literalCountSoFar);
     });
 
     int smallestLiteralCount = resultSubNodeVector[0]._literalCountSoFar;
