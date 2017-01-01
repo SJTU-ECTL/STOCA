@@ -29,6 +29,7 @@ SolutionTree::SolutionTree(vector<int> initialProblemVector, vector<int> degrees
     _nodeNumber = 1;
     _maxLevel = 0;
     _optimalNode = Node();
+    _optimalNodes = vector<Node>();
 }
 
 void SolutionTree::ProcessTree()
@@ -47,57 +48,86 @@ void SolutionTree::ProcessTree()
         processedNodeNumber += int(_nodeVector.size());
     }
 
-    cout << "Node processed: " << processedNodeNumber << endl << endl;
+    //cout << "Node processed: " << processedNodeNumber << endl << endl;
 
     assert(IsZeroMintermVector(_optimalNode._remainingProblemVector));
     assert(!_optimalNode._assignedAssMat.empty());
 
     // Display the result
     cout << "BEGIN: display final result" << endl;
-    cout << "The matrix is" << endl;
-    for (auto line : _optimalNode._assignedAssMat)
-    {
-        cout << line << endl;
-    }
-    cout << "The assigned cube decompositions are" << endl;
-    for (auto cDcmp : _optimalNode._assignedCubeDecompositions)
-    {
-        cout << "2^" << cDcmp.first;
-        for (auto c : cDcmp.second)
-        {
-            cout << " X [ ";
-            for (auto m : c)
-            {
-                cout << m << " ";
-            }
-            cout << "]";
-        }
-        cout << endl;
-    }
+    //cout << "The matrix is" << endl;
+    //for (auto line : _optimalNode._assignedAssMat)
+    //{
+    //    cout << line << endl;
+    //}
+    //cout << "The assigned cube decompositions are" << endl;
+    //for (auto cDcmp : _optimalNode._assignedCubeDecompositions)
+    //{
+    //    cout << "2^" << cDcmp.first;
+    //    for (auto c : cDcmp.second)
+    //    {
+    //        cout << " X [ ";
+    //        for (auto m : c)
+    //        {
+    //            cout << m << " ";
+    //        }
+    //        cout << "]";
+    //    }
+    //    cout << endl;
+    //}
     cout << "The minimum literal number is " << _minLiteralCount << endl;
     //cout << "The branch number is " << _nodeNumber << endl;
-    cout << "END: display final result" << endl;
-    cout << endl;
+    //cout << "END: display final result" << endl;
+    //cout << endl;
 
-    // write the .pla file
-    stringstream ss;
-    ss << "pla\\";
-    ss.fill('0');
-    ss.width(2);
-    ss << _caseNumber << ".pla";
-    auto plaFile = ofstream(ss.str());
-    plaFile << ".i " << _log2LengthOfTotalCube + _accuracy << endl;
-    plaFile << ".o 1" << endl;
+    //// write the .pla file
+    //stringstream ss;
+    //ss << "pla\\";
+    //ss.fill('0');
+    //ss.width(2);
+    //ss << _caseNumber << ".pla";
+    //auto plaFile = ofstream(ss.str());
+    //plaFile << ".i " << _log2LengthOfTotalCube + _accuracy << endl;
+    //plaFile << ".o 1" << endl;
 
-    for (auto line = 0; line < int(_optimalNode._assignedAssMat.size()); ++line)
+    //for (auto line = 0; line < int(_optimalNode._assignedAssMat.size()); ++line)
+    //{
+    //    for (auto col = 0; col < int(_optimalNode._assignedAssMat[line].size()); ++col)
+    //    {
+    //        if (_optimalNode._assignedAssMat[line][col] == '0') continue;
+    //        plaFile << IntToBin(col, _log2LengthOfTotalCube - 1) << IntToBin(line, _accuracy - 1) << " 1" << endl;
+    //    }
+    //}
+    //plaFile << ".e" << endl;
+
+    // process the _optimalNodes vector
+    cout << "Solution number: " << _optimalNodes.size() << endl << endl;
+
+    for (auto sol = 0; sol < _optimalNodes.size(); ++sol)
     {
-        for (auto col = 0; col < int(_optimalNode._assignedAssMat[line].size()); ++col)
+        stringstream ss;
+        ss << "pla\\case-";
+        ss.fill('0');
+        ss.width(2);
+        ss << _caseNumber << "\\";
+        ss << "solution-";
+        ss.fill('0');
+        ss.width(3);
+        ss << sol << ".pla";
+        auto plaFile = ofstream(ss.str());
+        plaFile << ".i " << _log2LengthOfTotalCube + _accuracy << endl;
+        plaFile << ".o 1" << endl;
+
+        for (auto line = 0; line < int(_optimalNodes[sol]._assignedAssMat.size()); ++line)
         {
-            if (_optimalNode._assignedAssMat[line][col] == '0') continue;
-            plaFile << IntToBin(col, _log2LengthOfTotalCube - 1) << IntToBin(line, _accuracy - 1) << " 1" << endl;
+            for (auto col = 0; col < int(_optimalNodes[sol]._assignedAssMat[line].size()); ++col)
+            {
+                if (_optimalNodes[sol]._assignedAssMat[line][col] == '0') continue;
+                plaFile << IntToBin(col, _log2LengthOfTotalCube - 1) << IntToBin(line, _accuracy - 1) << " 1" << endl;
+            }
         }
+        plaFile << ".e" << endl;
     }
-    plaFile << ".e" << endl;
 }
 
 vector<Node> SolutionTree::ProcessNode(Node currentNode)
@@ -190,6 +220,17 @@ vector<Node> SolutionTree::ProcessNode(Node currentNode)
             // assign the cube
             auto newAssMat = AssignMatrixByEspresso(currentNode._assignedAssMat, cubeDecomposition);
 
+            // calculate the hash for the new matrix
+            size_t seed = 0;
+            hash<vector<string>> hasher;
+            seed = hasher(newAssMat);
+            if (_existingMatrices[seed] == true)
+            {
+                // if the matrix exists purne it
+                continue;
+            }
+            _existingMatrices[seed] = true;
+
             // if it's unassignable, go to next cube decomposition
             if (newAssMat[0][0] == 'x')
             {
@@ -279,6 +320,7 @@ vector<Node> SolutionTree::ProcessNode(Node currentNode)
                 // update the solution
                 _minLiteralCount = literalCount;
                 _optimalNode = newNode;
+                _optimalNodes.push_back(newNode);
 
                 // display the update message TODO
 
@@ -318,7 +360,13 @@ vector<Node> SolutionTree::ProcessNodeVector(vector<Node> nodeVecToBeProcessed)
     }
 
     // if the level is the leaf _level, then return
-    if (resultSubNodeVector.empty()) return resultSubNodeVector;
+    //if (resultSubNodeVector.empty()) return resultSubNodeVector;
+    bool resultSubNodeVectorEmpty = false;
+    if (resultSubNodeVector.empty())
+    {
+        resultSubNodeVector = _optimalNodes;
+        resultSubNodeVectorEmpty = true;
+    }
 
     auto countSize = [](vector<int> v)
     {
@@ -362,7 +410,8 @@ vector<Node> SolutionTree::ProcessNodeVector(vector<Node> nodeVecToBeProcessed)
     for (auto it = resultSubNodeVector.begin(); it != resultSubNodeVector.end(); ++it)
     {
         int size = countSize(multiply(int(pow(2, (it->_lastAssignedCubeDecomposition).first)), multiply((it->_lastAssignedCubeDecomposition).second)));
-        if ((it->_literalCountSoFar != smallestLiteralCount) || (size != smallestCubeSize))
+        //if ((it->_literalCountSoFar != smallestLiteralCount) || (size != smallestCubeSize))
+        if ((it->_literalCountSoFar > smallestLiteralCount + 1) || (size != smallestCubeSize))
         {
             delIt = it;
             break;
@@ -371,6 +420,13 @@ vector<Node> SolutionTree::ProcessNodeVector(vector<Node> nodeVecToBeProcessed)
 
     // delete all nodes greater than the smallest ones
     resultSubNodeVector.erase(delIt, resultSubNodeVector.end());
+
+    //return resultSubNodeVector;
+    if (resultSubNodeVectorEmpty)
+    {
+        _optimalNodes = resultSubNodeVector;
+        resultSubNodeVector = vector<Node>();
+    }
 
     return resultSubNodeVector;
 }

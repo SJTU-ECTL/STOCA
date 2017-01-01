@@ -1,4 +1,5 @@
 #include "node.h"
+#include <chrono>
 
 using namespace std;
 
@@ -57,7 +58,30 @@ int main(int argc, char* argv[])
         }
 
         auto solutionTree = SolutionTree(problemVector, degrees, accuracy, caseCount);
+        auto start = chrono::system_clock::now();
         solutionTree.ProcessTree();
+        auto end = chrono::system_clock::now();
+        auto duration = chrono::duration_cast<std::chrono::milliseconds>(end - start);
+        auto milliseconds = duration.count();
+        cout << "milliseconds: " << milliseconds << endl;
+        auto hours = milliseconds / 3600000;
+        milliseconds -= hours * 3600000;
+        auto minitues = milliseconds / 60000;
+        milliseconds -= minitues * 60000;
+        auto seconds = milliseconds / 1000;
+        milliseconds -= seconds * 1000;
+        cout << "Time used: ";
+        cout << hours << ":";
+        cout.fill('0');
+        cout.width(2);
+        cout << minitues << ":";
+        cout.fill('0');
+        cout.width(2);
+        cout << seconds << ".";
+        cout.fill('0');
+        cout.width(3);
+        cout << milliseconds << endl;
+        cout << endl;
         ++caseCount;
     }
 

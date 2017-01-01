@@ -114,12 +114,14 @@ public:
     vector<Node> _nodeVector;
     int _minLiteralCount;   // current minimum literal count
     Node _optimalNode;
+    vector<Node> _optimalNodes; 
     unordered_map<int, int> _minLiteralCountOfLevel;
 
     vector<int> _rowGrayCode;
     vector<int> _colGrayCode;
 
     unordered_map<unordered_multiset<CubeDecomposition>, bool> _processedCubeDecompositions; // true if the set is processed before
+    unordered_map<size_t, bool> _existingMatrices; // true if the matrix exists
 
     int _updateTime;
     int _nodeNumber;
