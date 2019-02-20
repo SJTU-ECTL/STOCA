@@ -41,7 +41,7 @@ ABC 是 Linux 下面的程序, 请在 http://people.eecs.berkeley.edu/~alanmi/ab
 
 ### 两种方法: 
 #### 第一种方法
-使用钱老师的 MATLAB 程序直接转化为 Bernstein polynomial (我暂时找不到保存在哪里了, 请钱老师分享一下), 然后对系数进行近似来得到 problem vector.
+使用 MATLAB 程序（见目录 Univariate-Bernstein-Approximation）直接转化为 Bernstein polynomial, 然后对系数进行近似来得到 problem vector.
 
 例: tanh(x)
 
