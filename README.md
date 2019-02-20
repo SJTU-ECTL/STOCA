@@ -1,7 +1,10 @@
+本程序代码是基于 [[1]](#ref1) 中理论实现的一个样例. 
+
 ## (一) 程序的使用
 
-如果使用我编译的程序，运行的时候请确保目录结构为：
+如果直接编译程序，运行的时候请确保目录结构为：
 
+```
 ./                              # 工作目录
 |-- CA-w-h.exe                  # 主程序
 |-- mvsis50720.exe              # 主程序会调用它，程序名是 hard code
@@ -12,6 +15,7 @@
 |  |-- case-01/                 # vector.txt中有多少个case就建多少个文件夹
 |  `-- ......                   # 可以使用脚本批量生成
 `-- vector.txt                  # 程序的输入 文件名是 hard code
+```
 
 ### vector.txt 格式
 
@@ -68,7 +72,7 @@ tanh(x) ~= 0.0008*choose(4,0)*x^4 + 0.2483*choose(4,1)*x^3*(1-x) + 0.5031*choose
 0 254 773 671 195
 
 #### 第二种方法
-先将函数用其他多项式逼近, 然后再转换为 Bernstein polynomial (其实是转化为一般的 binary combination polynomial, 但 Bernstein polynomial 是等价的, 可以直接使用 [1] 中的公式)
+先将函数用其他多项式逼近, 然后再转换为 Bernstein polynomial (其实是转化为一般的 binary combination polynomial, 但 Bernstein polynomial 是等价的, 可以直接使用 [[2]](#ref2) 中的公式)
 
 例: tanh(x)
 
@@ -80,7 +84,7 @@ tanh(x) = x * f(t)
 
 只需得到 f(t) 的电路, 其输入为 t 的地方与 x 的 squaring unit 相连, 输出用 multiplier 乘以 x.
 
-对于 f(t), 使用 [1] 中的公式可以得到
+对于 f(t), 使用 [[2]](#ref2) 中的公式可以得到
 
 b[0] = 1
 b[1] = 11/12
@@ -109,4 +113,6 @@ b[4]*choose(4,4) ~= 197/256
 
 
 ## Reference
-[1] Qian, W., & Riedel, M. D. (2008, June). The synthesis of robust polynomial arithmetic with stochastic logic. In Design Automation Conference, 2008. DAC 2008. 45th ACM/IEEE (pp. 648-653). IEEE.
+<a name="ref1">[1]</a> Peng, X., & Qian, W. (2018). Stochastic Circuit Synthesis by Cube Assignment. IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems, 37(12), 3109-3122.
+
+<a name="ref2">[2]</a> Qian, W., & Riedel, M. D. (2008, June). The synthesis of robust polynomial arithmetic with stochastic logic. In Design Automation Conference, 2008. DAC 2008. 45th ACM/IEEE (pp. 648-653). IEEE.
