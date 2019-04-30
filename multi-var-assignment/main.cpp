@@ -31,7 +31,7 @@ int main(int argc, char* argv[])
         degrees.push_back(temp);
     }
 
-    assert(degrees.size() == variableNumber);
+   assert(degrees.size() == variableNumber);
     
 
     cout << "Variable number: " << variableNumber << endl;
@@ -43,7 +43,7 @@ int main(int argc, char* argv[])
     }
     cout << endl << endl;
 
-    while (getline(ifs, line))
+    while (getline(ifs, line))//following lines
     {
         cout << "Case No. " << caseCount << endl;
         cout << "======" << endl;
@@ -84,6 +84,6 @@ int main(int argc, char* argv[])
         cout << endl;
         ++caseCount;
     }
-
+	system("pause");
     return 0;
 }

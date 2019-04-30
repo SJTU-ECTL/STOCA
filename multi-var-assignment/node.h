@@ -3,7 +3,7 @@
 #define NODE_H
 
 #define MULTIPLE (1.5)
-
+#define w 2
 #include <vector>
 #include <stack>
 #include <cmath>
@@ -47,7 +47,9 @@ struct Node
     {
     }
 
-    Node(AssMat newAssMat, MintermVector newProblemVector, int newLevel, unordered_multiset<CubeDecomposition> newAssignedCubeDecompositions, CubeDecomposition lastAssignedCubeDecomposition, int literalCount);
+    //Node(AssMat newAssMat, MintermVector newProblemVector, int newLevel, unordered_multiset<CubeDecomposition> newAssignedCubeDecompositions, CubeDecomposition lastAssignedCubeDecomposition, int literalCount);
+
+    Node(AssMat newAssMat, MintermVector newProblemVector, int newLevel, vector<CubeDecomposition> newAssignedCubeDecompositions, CubeDecomposition lastAssignedCubeDecomposition, int literalCount);
 
     // assigned "assignment matrix"
     AssMat _assignedAssMat;
@@ -59,7 +61,8 @@ struct Node
     int _level;
 
     // the set of cubes that are already assigned
-    unordered_multiset<CubeDecomposition> _assignedCubeDecompositions;
+    //unordered_multiset<CubeDecomposition> _assignedCubeDecompositions;
+    vector<CubeDecomposition> _assignedCubeDecompositionsVec;
 
     // the last cube vector assigned
     CubeDecomposition _lastAssignedCubeDecomposition;
@@ -88,6 +91,8 @@ public:
     vector<Node> ProcessNodeVector(vector<Node> nodeVecToBeProcessed);
 
     AssMat AssignMatrixByEspresso(AssMat originalAssMat, CubeDecomposition cubeDecompositionToBeAssigned) const;
+
+    vector<AssMat> AssignMatrixByEspressoVector(AssMat originalAssMat, CubeDecomposition cubeDecompositionToBeAssigned) const;
 
     // find the assignment sets for a single vector
     vector<set<string>> FindAssignmentSetsOfStringForMintermVector(MintermVector lineCubeVector) const;
@@ -120,8 +125,11 @@ public:
     vector<int> _rowGrayCode;
     vector<int> _colGrayCode;
 
-    unordered_map<unordered_multiset<CubeDecomposition>, bool> _processedCubeDecompositions; // true if the set is processed before
+    //unordered_map<unordered_multiset<CubeDecomposition>, bool> _processedCubeDecompositions; // true if the set is processed before
+    //unordered_map<vector<CubeDecomposition>, bool> _processedCubeDecompositionsVec;
     unordered_map<size_t, bool> _existingMatrices; // true if the matrix exists
+    unordered_map<size_t, bool> _processedCubeDecompositionsOrderedSeed; 
+    unordered_map<size_t, bool> _processedCubeDecompositionsUnorderedSeed;
 
     int _updateTime;
     int _nodeNumber;
