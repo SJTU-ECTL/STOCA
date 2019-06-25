@@ -19,6 +19,9 @@
 
 using namespace std;
 
+#define LITERAL_LIMIT_PARAM_w 2 // prune by literal count in "processNodeVector()"
+#define X_COMB_PARAM_h 5 // keep first k x-cubes for each line cube vector
+
 typedef vector<string> AssMat; // assignment matrix
 typedef vector<int> MintermVector; // cube vector [0, 1, 2, 1]
 typedef vector<int> AssVec; // assignment vector [0, 1, 5, 4] ([000 001 101 100])

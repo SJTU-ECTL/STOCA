@@ -466,7 +466,7 @@ vector<Node> SolutionTree::ProcessNodeVector(vector<Node> nodeVecToBeProcessed)
     {
         int size = countSize(multiply(int(pow(2, (it->_lastAssignedCubeDecomposition).first)), multiply((it->_lastAssignedCubeDecomposition).second)));
         //if ((it->_literalCountSoFar != smallestLiteralCount) || (size != smallestCubeSize))
-        auto literal_limit_parameter = 3; //the controlled parameter
+        int literal_limit_parameter = LITERAL_LIMIT_PARAM_w; //the controlled parameter
         if ((it->_literalCountSoFar > smallestLiteralCount + literal_limit_parameter) || (size != smallestCubeSize))
         {
             delIt = it;
@@ -479,11 +479,13 @@ vector<Node> SolutionTree::ProcessNodeVector(vector<Node> nodeVecToBeProcessed)
 
     // the limit of x-combinations
 	
+	/*
     auto x_comb = 7;//the controlled parameter
     if (resultSubNodeVector.size() > x_comb)
     {
         resultSubNodeVector.erase(resultSubNodeVector.begin() + x_comb, resultSubNodeVector.end());
     }
+	*/
 
     //return resultSubNodeVector;
 	
@@ -747,6 +749,8 @@ vector<AssMat> SolutionTree::AssignMatrixByEspressoVector(AssMat originalAssMatC
     // one of the assignment set, like {100, 101, 110, 111}
     auto assignmentSetIt = assignmentSetsOfIntForCubeDecomposition.begin();
 
+	int valid_count = 0;
+	int x_comb_limit = X_COMB_PARAM_h;
     while (assignmentSetIt != assignmentSetsOfIntForCubeDecomposition.end())
     {
         auto newAssMat = originalAssMatConst;
@@ -896,6 +900,11 @@ vector<AssMat> SolutionTree::AssignMatrixByEspressoVector(AssMat originalAssMatC
         /*break;*/
         ret.push_back(newAssMat);
         ++assignmentSetIt;
+		valid_count++;
+		
+		if (valid_count == x_comb_limit) {
+			break;
+		}
     }
 
     //return originalAssMat;
