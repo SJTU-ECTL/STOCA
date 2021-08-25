@@ -113,6 +113,6 @@ b[4]*choose(4,4) ~= 197/256
 
 
 ## Reference
-<a name="ref1">[1]</a> Peng, X., & Qian, W. (2018). Stochastic Circuit Synthesis by Cube Assignment. IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems, 37(12), 3109-3122.
+<a name="ref1">[1]</a> Peng, X., & Qian, W. (2018). [Stochastic Circuit Synthesis by Cube Assignment](https://umji.sjtu.edu.cn/~wkqian/papers/Peng_Qian_Stochastic_Circuit_Synthesis_by_Cube_Assignment.pdf). IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems, 37(12), 3109-3122.
 
-<a name="ref2">[2]</a> Qian, W., & Riedel, M. D. (2008, June). The synthesis of robust polynomial arithmetic with stochastic logic. In Design Automation Conference, 2008. DAC 2008. 45th ACM/IEEE (pp. 648-653). IEEE.
+<a name="ref2">[2]</a> Qian, W., & Riedel, M. D. (2008, June). [The synthesis of robust polynomial arithmetic with stochastic logic](https://umji.sjtu.edu.cn/~wkqian/papers/Qian_Riedel_The_Synthesis_of_Robust_Polynomial_Arithmetic_with_Stochastic_Logic.pdf). In Design Automation Conference, 2008. DAC 2008. 45th ACM/IEEE (pp. 648-653). IEEE.
